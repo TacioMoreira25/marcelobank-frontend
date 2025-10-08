@@ -13,9 +13,9 @@ function Home() {
         <div className="relative z-10 flex flex-row items-center justify-center w-full h-full gap-8">
           <div className="flex flex-col items-center justify-center">
         <h2 className="text-3xl font-bold text-white mb-4 drop-shadow-[0_8px_16px_rgba(0,0,0,0.9)]">
-          Bem-vindo ao <b>Marcelo Bank</b>
+          Bem-vindo ao <b className="text-pink-500">Marcelo Bank</b>
         </h2>
-        <p className="text-white mb-6 drop-shadow-[0_4px_8px_rgba(0,0,0,0.85)]">
+        <p className="text-white mb-6 drop-shadow-[0_10px_10px_rgba(0,0,0,0.85)]">
           Mais que um Banco, um parceiro para seus negócios.
         </p>
           </div>
