@@ -3,14 +3,17 @@ import Home from "./pages/Home";
 import Clientes from "./pages/Clientes";
 import Contas from "./pages/Contas";
 import Transacacoes from "./pages/Transacacoes";
+import MBank from "./assets/MBank.png";
 
 function App() {
   return (
     <Router>
       <div className="min-h-screen bg-gray-50">
-        <nav className="bg-blue-600 text-white p-4">
+        <nav className="bg-pink-500 text-white p-4">
           <div className="container mx-auto flex justify-between items-center">
-            <h1 className="text-2xl font-bold">MarceloBank</h1>
+            <h1 className="text-2xl font-bold">
+              <img src={MBank} alt="MarceloBank" className="h-12 inline" />
+            </h1>
             <div className="space-x-4">
               <Link to="/" className="hover:text-blue-200 transition-colors">
                 Home
