@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import Home from "./pages/Home";
 import Clientes from "./pages/Cliente";
 import Conta from "./pages/Conta";
-import MBank from "./assets/MBank.png";
+import MBank from "./assets/LogoMB.png";
 
 function App() {
   return (
@@ -13,6 +13,19 @@ function App() {
             <h1 className="text-2xl font-bold">
               <img src={MBank} alt="MarceloBank" className="h-12 inline" />
             </h1>
+            
+            <div className="space-x-4 flex items-center">
+              <div className="relative group inline-block">
+                <button
+                  className="hover:text-blue-200 transition-colors focus:outline-none"
+                  type="button"
+                >
+                  Sobre Nós
+                </button>
+                
+              </div>
+            </div>
+
             <div className="space-x-4">
               <Link
                 to="/clientes"
