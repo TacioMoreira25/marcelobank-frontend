@@ -1,8 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import Home from "./pages/Home";
-import Clientes from "./pages/Clientes";
-import Contas from "./pages/Contas";
-import Transacacoes from "./pages/Transacacoes";
+import Clientes from "./pages/Cliente";
+import Conta from "./pages/Conta";
 import MBank from "./assets/MBank.png";
 
 function App() {
@@ -15,26 +14,11 @@ function App() {
               <img src={MBank} alt="MarceloBank" className="h-12 inline" />
             </h1>
             <div className="space-x-4">
-              <Link to="/" className="hover:text-blue-200 transition-colors">
-                Home
-              </Link>
               <Link
                 to="/clientes"
                 className="hover:text-blue-200 transition-colors"
               >
-                Clientes
-              </Link>
-              <Link
-                to="/contas"
-                className="hover:text-blue-200 transition-colors"
-              >
-                Contas
-              </Link>
-              <Link
-                to="/transacoes"
-                className="hover:text-blue-200 transition-colors"
-              >
-                Transações
+                Criar Conta
               </Link>
             </div>
           </div>
@@ -44,8 +28,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/clientes" element={<Clientes />} />
-            <Route path="/contas" element={<Contas />} />
-            <Route path="/transacoes" element={<Transacacoes />} />
+            <Route path="/contas" element={<Conta />} />
           </Routes>
         </main>
       </div>
