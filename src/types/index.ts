@@ -1,4 +1,4 @@
-export type TipoConta = 'CORRENTE' | 'POUPANCA' | 'SALARIO' | 'INVESTIMENTO';
+export type TipoConta = 'CORRENTE' | 'POUPANCA';
 
 export type TipoCartao = 'CREDITO' | 'DEBITO' | 'CREDITO_DEBITO' | 'VIRTUAL' | 'PRE_PAGO';
 
@@ -39,6 +39,7 @@ export interface Agencia {
 export interface Conta {
   numeroConta: number;
   tipoConta: TipoConta;
+  pin: number;
   saldo: number;
   dataAbertura?: string;
   status?: string;
