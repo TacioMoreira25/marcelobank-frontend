@@ -1,47 +1,139 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { transacaoService } from "../services/transacaoService";
-import type { ClienteCompleto } from "../types";
+import { clienteService } from "../services/clienteService";
+import { emprestimoService } from "../services/emprestimoService";
+import { cartaoService } from "../services/cartaoService";
+import { contaService } from "../services/contaService";
+import type { ClienteCompleto, Transacao, Emprestimo, Cartao } from "../types";
+import Header from "../components/Header";
+import Nav from "../components/Nav";
+import TransferForm from "../components/TransferForm";
+import DepositForm from "../components/DepositForm";
+import SaqueForm from "../components/SaqueForm";
+import ExtractList from "../components/ExtractList";
+import LoanSection from "../components/LoanSection";
+import CardsSection from "../components/CardsSection";
+
+type Section =
+  | "overview"
+  | "transfer"
+  | "deposit"
+  | "saque"
+  | "extract"
+  | "loan"
+  | "cards";
 
 function Conta() {
   const navigate = useNavigate();
-  const [clienteData, setClienteData] = useState<ClienteCompleto | null>(null);
+
+  // Estado principal
+  const [cliente, setCliente] = useState<ClienteCompleto | null>(null);
+  const [numeroConta, setNumeroConta] = useState<number | null>(null);
+  const [saldo, setSaldo] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [activeSection, setActiveSection] = useState("overview");
+  const [active, setActive] = useState<Section>("overview");
 
-  // Estados para operações
-  const [transferData, setTransferData] = useState({
+  // Listas
+  const [transacoes, setTransacoes] = useState<Transacao[]>([]);
+  const [emprestimos, setEmprestimos] = useState<Emprestimo[]>([]);
+  const [cartoes, setCartoes] = useState<Cartao[]>([]);
+
+  // Forms
+  const [transfer, setTransfer] = useState({
     contaDestino: "",
     valor: "",
     pin: "",
   });
-  const [depositData, setDepositData] = useState({ valor: "" });
-  const [saqueData, setSaqueData] = useState({ valor: "", pin: "" });
+  const [deposit, setDeposit] = useState({ valor: "" });
+  const [saque, setSaque] = useState({ valor: "", pin: "" });
+  const [loan, setLoan] = useState({ valor: "", prazo: "12" });
+
+
+  const toArray = <T,>(
+    input: unknown,
+    keys: string[] = ["content", "items", "data", "transacoes"]
+  ): T[] => {
+    if (Array.isArray(input)) return input as T[];
+    if (input && typeof input === "object") {
+      const obj = input as Record<string, unknown>;
+      for (const k of keys) {
+        const v = obj[k];
+        if (Array.isArray(v)) return v as T[];
+      }
+    }
+    return [] as T[];
+  };
+
+  const pickSaldo = (input: unknown): number | undefined => {
+    if (typeof input === "number") return input;
+    if (input && typeof input === "object") {
+      const obj = input as Record<string, unknown>;
+      const direto = obj["saldo"];
+      if (typeof direto === "number") return direto;
+      const conta = obj["conta"];
+      if (conta && typeof conta === "object") {
+        const s = (conta as Record<string, unknown>)["saldo"];
+        if (typeof s === "number") return s;
+      }
+    }
+    return undefined;
+  };
+
+  const fetchAll = useCallback(async (cpf: string, conta: number) => {
+    setLoading(true);
+    try {
+      const [clienteResp, transResp, empResp, cartResp, saldoResp] =
+        await Promise.all([
+          clienteService.buscarInfoCompleta(cpf),
+          transacaoService.buscarPorConta(conta),
+          emprestimoService.buscarPorCliente(cpf),
+          cartaoService.buscarPorCliente(cpf),
+          contaService.consultarSaldo(conta),
+        ]);
+
+      const dados = (clienteResp.data || {}) as ClienteCompleto;
+      setCliente(dados);
+      // Saldo: prioriza resposta dedicada
+      const saldoApi = pickSaldo(saldoResp?.data);
+      const saldoLocal = dados?.contas?.[0]?.saldo ?? 0;
+      setSaldo(typeof saldoApi === "number" ? saldoApi : saldoLocal);
+
+      // Extrato: normaliza para array tipado
+      const txList = toArray<Transacao>(transResp?.data);
+      setTransacoes(txList);
+
+      // Empréstimos e Cartões (normaliza wrappers)
+      const empList = toArray<Emprestimo>(empResp?.data);
+      setEmprestimos(empList);
+
+      const cartList = toArray<Cartao>(cartResp?.data);
+      setCartoes(cartList);
+      setError("");
+    } catch {
+      setError("Erro ao carregar dados. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const cpf = localStorage.getItem("clienteCpf");
-    const storedClienteData = localStorage.getItem("clienteData");
-
-    if (!cpf || !storedClienteData) {
-      setError("Nenhum cliente autenticado. Redirecionando...");
-      setTimeout(() => navigate("/"), 2000);
+    const cpf = localStorage.getItem("clienteCpf") || "";
+    const contaStr = localStorage.getItem("numeroConta") || "";
+    const conta = parseInt(contaStr);
+    if (!cpf || !conta) {
+      setError("Sessão expirada. Faça login novamente.");
       setLoading(false);
+      setTimeout(() => navigate("/"), 1500);
       return;
     }
+    setNumeroConta(conta);
+    fetchAll(cpf, conta);
+  }, [navigate, fetchAll]);
 
-    try {
-      const data = JSON.parse(storedClienteData) as ClienteCompleto;
-      setClienteData(data);
-      setLoading(false);
-    } catch {
-      setError("Erro ao carregar dados. Redirecionando...");
-      setTimeout(() => navigate("/"), 2000);
-      setLoading(false);
-    }
-  }, [navigate]);
-
-  const handleLogout = () => {
+  // Ações
+  const doLogout = () => {
     localStorage.removeItem("clienteCpf");
     localStorage.removeItem("numeroConta");
     localStorage.removeItem("clienteData");
@@ -49,385 +141,210 @@ function Conta() {
     navigate("/");
   };
 
-  // Funções bancárias
-  const handleTransfer = async (e: React.FormEvent) => {
+  const doTransfer = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (
-      !transferData.contaDestino ||
-      !transferData.valor ||
-      !transferData.pin
-    ) {
+    if (!numeroConta) return;
+    if (!transfer.contaDestino || !transfer.valor || !transfer.pin) {
       alert("Preencha todos os campos");
       return;
     }
-    if (!clienteData?.contas?.[0]) {
-      alert("Conta não encontrada");
-      return;
-    }
-
     try {
       await transacaoService.transferir(
-        clienteData.contas[0].numeroConta,
-        parseInt(transferData.contaDestino),
-        parseFloat(transferData.valor),
-        transferData.pin
+        numeroConta,
+        parseInt(transfer.contaDestino),
+        parseFloat(transfer.valor),
+        transfer.pin
       );
-      alert("Transferência realizada com sucesso!");
-      setTransferData({ contaDestino: "", valor: "", pin: "" });
-      setActiveSection("overview");
-      window.location.reload(); // Recarrega dados
+      alert("Transferência realizada");
+      setTransfer({ contaDestino: "", valor: "", pin: "" });
+      // Recarrega conjuntos
+      const cpf = localStorage.getItem("clienteCpf") || "";
+      fetchAll(cpf, numeroConta);
+      setActive("overview");
     } catch {
-      alert("Erro ao realizar transferência");
+      alert("Erro na transferência");
     }
   };
 
-  const handleDeposit = async (e: React.FormEvent) => {
+  const doDeposit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!depositData.valor) {
-      alert("Informe o valor do depósito");
+    if (!numeroConta) return;
+    if (!deposit.valor) {
+      alert("Informe o valor");
       return;
     }
-    if (!clienteData?.contas?.[0]) {
-      alert("Conta não encontrada");
-      return;
-    }
-
     try {
-      await transacaoService.depositar(
-        clienteData.contas[0].numeroConta,
-        parseFloat(depositData.valor)
-      );
-      alert("Depósito realizado com sucesso!");
-      setDepositData({ valor: "" });
-      setActiveSection("overview");
-      window.location.reload(); // Recarrega dados
+      await transacaoService.depositar(numeroConta, parseFloat(deposit.valor));
+      alert("Depósito realizado");
+      setDeposit({ valor: "" });
+      const cpf = localStorage.getItem("clienteCpf") || "";
+      fetchAll(cpf, numeroConta);
+      setActive("overview");
     } catch {
-      alert("Erro ao realizar depósito");
+      alert("Erro no depósito");
     }
   };
 
-  const handleSaque = async (e: React.FormEvent) => {
+  const doSaque = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!saqueData.valor || !saqueData.pin) {
+    if (!numeroConta) return;
+    if (!saque.valor || !saque.pin) {
       alert("Preencha todos os campos");
       return;
     }
-    if (!clienteData?.contas?.[0]) {
-      alert("Conta não encontrada");
-      return;
-    }
-
     try {
       await transacaoService.sacar(
-        clienteData.contas[0].numeroConta,
-        parseFloat(saqueData.valor),
-        saqueData.pin
+        numeroConta,
+        parseFloat(saque.valor),
+        saque.pin
       );
-      alert("Saque realizado com sucesso!");
-      setSaqueData({ valor: "", pin: "" });
-      setActiveSection("overview");
-      window.location.reload(); // Recarrega dados
+      alert("Saque realizado");
+      setSaque({ valor: "", pin: "" });
+      const cpf = localStorage.getItem("clienteCpf") || "";
+      fetchAll(cpf, numeroConta);
+      setActive("overview");
     } catch {
-      alert("Erro ao realizar saque");
+      alert("Erro no saque");
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex justify-center items-center">
-        <div className="text-xl text-gray-600">Carregando...</div>
-      </div>
-    );
-  }
+  const doSolicitarEmprestimo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cpf = localStorage.getItem("clienteCpf") || "";
+    if (!cpf) return;
+    if (!loan.valor || !loan.prazo) {
+      alert("Informe valor e prazo");
+      return;
+    }
+    try {
+      await emprestimoService.solicitar(
+        cpf,
+        parseFloat(loan.valor),
+        parseInt(loan.prazo)
+      );
+      alert("Solicitação enviada");
+      if (numeroConta) fetchAll(cpf, numeroConta);
+      setActive("loan");
+      setLoan({ valor: "", prazo: "12" });
+    } catch {
+      alert("Erro ao solicitar empréstimo");
+    }
+  };
 
-  if (error || !clienteData) {
+  const doEmitirCartao = async () => {
+    const cpf = localStorage.getItem("clienteCpf") || "";
+    if (!cpf || !numeroConta) return;
+    try {
+      const numeroCartao = Math.floor(100000 + Math.random() * 900000); // simples
+      await cartaoService.emitir(numeroCartao, numeroConta, "DEBITO", 1000);
+      alert("Cartão emitido");
+      fetchAll(cpf, numeroConta);
+    } catch {
+      alert("Erro ao emitir cartão");
+    }
+  };
+
+  const doBloquear = async (numeroCartao: number) => {
+    const cpf = localStorage.getItem("clienteCpf") || "";
+    if (!cpf) return;
+    try {
+      await cartaoService.bloquear(numeroCartao);
+      if (numeroConta) fetchAll(cpf, numeroConta);
+    } catch {
+      alert("Erro ao bloquear cartão");
+    }
+  };
+
+  const doDesbloquear = async (numeroCartao: number) => {
+    const cpf = localStorage.getItem("clienteCpf") || "";
+    if (!cpf) return;
+    try {
+      await cartaoService.desbloquear(numeroCartao);
+      if (numeroConta) fetchAll(cpf, numeroConta);
+    } catch {
+      alert("Erro ao desbloquear cartão");
+    }
+  };
+
+  // UI simples
+  if (loading) return <div className="p-6">Carregando...</div>;
+  if (error || !cliente)
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center space-y-4">
-        <div className="text-xl text-red-600">
-          {error || "Dados do cliente não encontrados"}
-        </div>
+      <div className="p-6">
+        <p className="text-red-600 mb-4">
+          {error || "Falha ao carregar dados."}
+        </p>
         <button
+          className="px-3 py-2 bg-gray-200 rounded"
           onClick={() => navigate("/")}
-          className="px-4 py-2 bg-pink-500 text-white rounded hover:bg-pink-600"
         >
-          Voltar ao Login
+          Voltar
         </button>
       </div>
     );
-  }
-
-  const cliente = clienteData;
-  const conta = cliente.contas?.[0];
-  const saldo = conta?.saldo || 0;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-pink-500 to-purple-600 text-white p-6 rounded-lg shadow-lg mb-6">
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-2xl font-bold mb-2">
-                Bem-vindo, {cliente.nome || "Cliente"}
-              </h1>
-              <div className="space-y-1 text-sm">
-                <p>CPF: {cliente.cpf || "N/A"}</p>
-                <p>Email: {cliente.email || "N/A"}</p>
-                <p>Telefone: {cliente.telefone || "N/A"}</p>
-                {conta && (
-                  <>
-                    <p>Conta: {conta.numeroConta}</p>
-                    <p>Tipo: {conta.tipoConta}</p>
-                  </>
-                )}
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-3xl font-bold mb-2">
-                R$ {saldo.toFixed(2)}
-              </div>
-              <p className="text-sm opacity-90">Saldo atual</p>
-              <button
-                onClick={handleLogout}
-                className="mt-4 px-4 py-2 bg-white bg-opacity-20 rounded hover:bg-opacity-30 transition-colors text-sm"
-              >
-                Sair
-              </button>
-            </div>
-          </div>
+    <div className="p-4 space-y-4">
+      <Header
+        cliente={cliente}
+        saldo={saldo}
+        numeroConta={numeroConta ?? undefined}
+        onLogout={doLogout}
+      />
+
+      <Nav active={active} onChange={setActive} />
+
+      {active === "overview" && (
+        <div className="border p-3 rounded">
+          <div>Transações: {transacoes.length}</div>
+          <div>Empréstimos: {emprestimos.length}</div>
+          <div>Cartões: {cartoes.length}</div>
         </div>
+      )}
 
-        {/* Content */}
-        <div className="mb-6">
-          {/* Navegação */}
-          <div className="bg-white rounded-lg shadow-md p-4 mb-6">
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setActiveSection("overview")}
-                className={`px-4 py-2 rounded text-sm ${
-                  activeSection === "overview"
-                    ? "bg-pink-500 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                🏠 Visão Geral
-              </button>
-              <button
-                onClick={() => setActiveSection("transfer")}
-                className={`px-4 py-2 rounded text-sm ${
-                  activeSection === "transfer"
-                    ? "bg-pink-500 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                💸 Transferência
-              </button>
-              <button
-                onClick={() => setActiveSection("deposit")}
-                className={`px-4 py-2 rounded text-sm ${
-                  activeSection === "deposit"
-                    ? "bg-pink-500 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                💰 Depósito
-              </button>
-              <button
-                onClick={() => setActiveSection("saque")}
-                className={`px-4 py-2 rounded text-sm ${
-                  activeSection === "saque"
-                    ? "bg-pink-500 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                💳 Saque
-              </button>
-            </div>
-          </div>
-        </div>
+      {active === "transfer" && (
+        <TransferForm
+          values={transfer}
+          onChange={(vals) => setTransfer({ ...transfer, ...vals })}
+          onSubmit={doTransfer}
+        />
+      )}
 
-        {/* Conteúdo das seções */}
-        {activeSection === "overview" && (
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">
-              🏠 Visão Geral
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="text-center p-4 border rounded-lg">
-                <h4 className="font-semibold text-gray-700 mb-2">Conta</h4>
-                <p className="text-2xl font-bold text-blue-600">
-                  {conta?.numeroConta || "N/A"}
-                </p>
-              </div>
-              <div className="text-center p-4 border rounded-lg">
-                <h4 className="font-semibold text-gray-700 mb-2">Tipo</h4>
-                <p className="text-2xl font-bold text-orange-600">
-                  {conta?.tipoConta || "N/A"}
-                </p>
-              </div>
-              <div className="text-center p-4 border rounded-lg">
-                <h4 className="font-semibold text-gray-700 mb-2">Status</h4>
-                <p className="text-2xl font-bold text-green-600">Ativa</p>
-              </div>
-            </div>
-          </div>
-        )}
+      {active === "deposit" && (
+        <DepositForm
+          value={deposit.valor}
+          onChange={(v) => setDeposit({ valor: v })}
+          onSubmit={doDeposit}
+        />
+      )}
 
-        {activeSection === "transfer" && (
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">
-              💸 Transferência
-            </h3>
-            <form onSubmit={handleTransfer} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Conta de Destino
-                </label>
-                <input
-                  type="number"
-                  value={transferData.contaDestino}
-                  onChange={(e) =>
-                    setTransferData((prev) => ({
-                      ...prev,
-                      contaDestino: e.target.value,
-                    }))
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
-                  placeholder="Número da conta"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Valor
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={transferData.valor}
-                  onChange={(e) =>
-                    setTransferData((prev) => ({
-                      ...prev,
-                      valor: e.target.value,
-                    }))
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
-                  placeholder="0,00"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  PIN
-                </label>
-                <input
-                  type="password"
-                  maxLength={4}
-                  value={transferData.pin}
-                  onChange={(e) =>
-                    setTransferData((prev) => ({
-                      ...prev,
-                      pin: e.target.value.replace(/\D/g, "").slice(0, 4),
-                    }))
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
-                  placeholder="••••"
-                />
-              </div>
-              <button
-                type="submit"
-                className="w-full bg-pink-500 text-white py-2 px-4 rounded-md hover:bg-pink-600 transition-colors"
-              >
-                Transferir
-              </button>
-            </form>
-          </div>
-        )}
+      {active === "saque" && (
+        <SaqueForm
+          values={saque}
+          onChange={(vals) => setSaque({ ...saque, ...vals })}
+          onSubmit={doSaque}
+        />
+      )}
 
-        {activeSection === "deposit" && (
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">
-              💰 Depósito
-            </h3>
-            <form onSubmit={handleDeposit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Valor
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={depositData.valor}
-                  onChange={(e) =>
-                    setDepositData((prev) => ({
-                      ...prev,
-                      valor: e.target.value,
-                    }))
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
-                  placeholder="0,00"
-                />
-              </div>
-              <button
-                type="submit"
-                className="w-full bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors"
-              >
-                Depositar
-              </button>
-            </form>
-          </div>
-        )}
+      {active === "extract" && <ExtractList items={transacoes} />}
 
-        {activeSection === "saque" && (
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">
-              💳 Saque
-            </h3>
-            <form onSubmit={handleSaque} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Valor
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={saqueData.valor}
-                  onChange={(e) =>
-                    setSaqueData((prev) => ({
-                      ...prev,
-                      valor: e.target.value,
-                    }))
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
-                  placeholder="0,00"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  PIN
-                </label>
-                <input
-                  type="password"
-                  maxLength={4}
-                  value={saqueData.pin}
-                  onChange={(e) =>
-                    setSaqueData((prev) => ({
-                      ...prev,
-                      pin: e.target.value.replace(/\D/g, "").slice(0, 4),
-                    }))
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
-                  placeholder="••••"
-                />
-              </div>
-              <button
-                type="submit"
-                className="w-full bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition-colors"
-              >
-                Sacar
-              </button>
-            </form>
-          </div>
-        )}
-      </div>
+      {active === "loan" && (
+        <LoanSection
+          values={loan}
+          onChange={(vals) => setLoan({ ...loan, ...vals })}
+          onSubmit={doSolicitarEmprestimo}
+          items={emprestimos}
+        />
+      )}
+
+      {active === "cards" && (
+        <CardsSection
+          items={cartoes}
+          onEmitir={doEmitirCartao}
+          onBloquear={doBloquear}
+          onDesbloquear={doDesbloquear}
+        />
+      )}
     </div>
   );
 }
