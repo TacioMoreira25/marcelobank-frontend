@@ -12,7 +12,7 @@ import MBank from "./assets/LogoMB.png";
 
 function AppShell() {
   const location = useLocation();
-  const hideNav = location.pathname === "/contas"; // oculta na página de conta
+  const hideNav = location.pathname.startsWith("/contas"); // oculta na página de conta e subrotas
 
   return (
     <>
@@ -58,9 +58,11 @@ function AppShell() {
           </Routes>
         </main>
       </div>
-      <footer className="bg-gray-500 text-white p-4 mt-8 text-center">
-        {`© ${new Date().getFullYear()} Marcelo Bank. Todos os direitos reservados.`}
-      </footer>
+      {!hideNav && (
+        <footer className="bg-gray-500 text-white p-4 mt-8 text-center">
+          {`© ${new Date().getFullYear()} Marcelo Bank. Todos os direitos reservados.`}
+        </footer>
+      )}
     </>
   );
 }
