@@ -4,8 +4,15 @@ import { contaService } from "../services/contaService";
 import {
   formatCPF,
   formatPhone,
+  formatDateForBackend,
 } from "../utils/formatters";
-import type { Cliente, Conta, TipoConta } from "../types";
+import {
+  validateCPF,
+  validateEmail,
+  validatePhone as validatePhoneUtil,
+} from "../utils/validations";
+import type { Cliente, TipoConta, CriarContaDTO } from "../types";
+import { useNavigate } from "react-router-dom";
 
 interface FormData {
   cpf: string;
@@ -26,6 +33,7 @@ function ClientePage() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
   const [successMessage, setSuccessMessage] = useState("");
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState<FormData>({
     cpf: "",
@@ -51,6 +59,47 @@ function ClientePage() {
     });
     setErrors({});
     setSuccessMessage("");
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: Errors = {};
+
+    if (!formData.cpf) {
+      newErrors.cpf = "CPF é obrigatório";
+    } else if (!validateCPF(formData.cpf)) {
+      newErrors.cpf = "CPF deve ter 11 dígitos";
+    }
+
+    if (!formData.nome || formData.nome.length < 3) {
+      newErrors.nome = "Nome deve ter pelo menos 3 caracteres";
+    }
+
+    if (!formData.email) {
+      newErrors.email = "Email é obrigatório";
+    } else if (!validateEmail(formData.email)) {
+      newErrors.email = "Formato de email inválido";
+    }
+
+    if (!formData.telefone) {
+      newErrors.telefone = "Telefone é obrigatório";
+    } else if (!validatePhoneUtil(formData.telefone)) {
+      newErrors.telefone = "Formato de telefone inválido";
+    }
+
+    if (!formData.dataNascimento) {
+      newErrors.dataNascimento = "Data de nascimento é obrigatória";
+    }
+
+    if (!formData.endereco || formData.endereco.length < 5) {
+      newErrors.endereco = "Endereço deve ter pelo menos 5 caracteres";
+    }
+
+    if (!formData.pin || formData.pin.length !== 4) {
+      newErrors.pin = "PIN deve ter exatamente 4 dígitos";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleInputChange = (
@@ -79,54 +128,70 @@ function ClientePage() {
   const handleCriarConta = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!validateForm()) {
+      return;
+    }
+
     setLoading(true);
     setErrors({});
     setSuccessMessage("");
 
     try {
+      // 1. Criar cliente
+      const dataConvertida = formatDateForBackend(formData.dataNascimento);
+
       const clienteData: Cliente = {
         cpf: formData.cpf.replace(/\D/g, ""),
         nome: formData.nome,
         email: formData.email,
         telefone: formData.telefone.replace(/\D/g, ""),
-        dataNascimento: formData.dataNascimento,
+        dataNascimento: dataConvertida,
         endereco: formData.endereco,
       };
 
       const clienteResponse = await clienteService.criar(clienteData);
-      const cliente = clienteResponse.data;
 
-      const contaData: Conta = {
-        numeroConta: generateAccountNumber(),
+      if (!clienteResponse.data) {
+        throw new Error("Erro ao criar cliente");
+      }
+
+      // 2. Criar conta - usar formato DTO que o backend espera
+      const criarContaDTO: CriarContaDTO = {
+        cpf: formData.cpf.replace(/\D/g, ""),
         tipoConta: formData.tipoConta,
-        pin: parseInt(formData.pin),
-        saldo: 0,
-        cliente: cliente,
-        agencia: {
-          codigoAgencia: 1,
-        },
+        pin: formData.pin,
+        saldoInicial: 0,
       };
 
-      const contaResponse = await contaService.criarConta(contaData);
-      const conta = contaResponse.data;
+      const contaResponse = await contaService.criarConta(criarContaDTO);
+
+      if (!contaResponse.data) {
+        throw new Error("Erro ao criar conta");
+      }
 
       setSuccessMessage(
-        `Conta criada com sucesso! Número da conta: ${conta.numeroConta
-          .toString()
-          .padStart(8, "0")}`
+        `Conta criada com sucesso! Número da conta: ${contaResponse.data.numeroConta}`
       );
+
       resetForm();
+
+      setTimeout(() => {
+        navigate("/");
+      }, 2000);
     } catch (error: unknown) {
-      console.error("Erro ao criar conta:", error);
       if (error && typeof error === "object" && "response" in error) {
         const axiosError = error as {
-          response?: { data?: { message?: string } };
+          response?: {
+            data?: { message?: string; erro?: string };
+            status?: number;
+            statusText?: string;
+          };
         };
-        if (axiosError.response?.data?.message) {
-          setErrors({ general: axiosError.response.data.message });
-        } else {
-          setErrors({ general: "Erro ao criar conta. Tente novamente." });
-        }
+        const errorMsg =
+          axiosError.response?.data?.message ||
+          axiosError.response?.data?.erro ||
+          "Erro ao criar conta. Tente novamente.";
+        setErrors({ general: errorMsg });
       } else {
         setErrors({ general: "Erro ao criar conta. Tente novamente." });
       }
@@ -170,6 +235,9 @@ function ClientePage() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
               placeholder="Digite seu nome completo"
             />
+            {errors.nome && (
+              <p className="text-red-500 text-xs mt-1">{errors.nome}</p>
+            )}
           </div>
 
           <div>
@@ -186,6 +254,9 @@ function ClientePage() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
               placeholder="000.000.000-00"
             />
+            {errors.cpf && (
+              <p className="text-red-500 text-xs mt-1">{errors.cpf}</p>
+            )}
           </div>
 
           <div>
@@ -201,6 +272,9 @@ function ClientePage() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
               placeholder="seu@email.com"
             />
+            {errors.email && (
+              <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+            )}
           </div>
 
           <div>
@@ -217,6 +291,9 @@ function ClientePage() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
               placeholder="(00) 00000-0000"
             />
+            {errors.telefone && (
+              <p className="text-red-500 text-xs mt-1">{errors.telefone}</p>
+            )}
           </div>
 
           <div>
@@ -231,6 +308,11 @@ function ClientePage() {
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
             />
+            {errors.dataNascimento && (
+              <p className="text-red-500 text-xs mt-1">
+                {errors.dataNascimento}
+              </p>
+            )}
           </div>
 
           <div>
@@ -246,6 +328,9 @@ function ClientePage() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
               placeholder="Rua, número, bairro, cidade"
             />
+            {errors.endereco && (
+              <p className="text-red-500 text-xs mt-1">{errors.endereco}</p>
+            )}
           </div>
 
           <div>
@@ -279,6 +364,9 @@ function ClientePage() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
               placeholder="Digite um PIN de 4 dígitos"
             />
+            {errors.pin && (
+              <p className="text-red-500 text-xs mt-1">{errors.pin}</p>
+            )}
             <p className="text-xs text-gray-500 mt-1">
               PIN de 4 dígitos para acessar sua conta
             </p>

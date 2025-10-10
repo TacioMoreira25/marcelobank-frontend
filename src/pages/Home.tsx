@@ -1,27 +1,53 @@
-//import { formatCurrency } from "../utils/formatters";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { authService } from "../services/authService";
 import { clienteService } from "../services/clienteService";
 import { formatCPF } from "../utils/formatters";
+import { validateCPF } from "../utils/validations";
+import { useNavigate } from "react-router-dom";
 
 function Home() {
   const [cpf, setCpf] = useState("");
   const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
+
+  // Logout automático quando chega na Home
+  useEffect(() => {
+    localStorage.removeItem("clienteCpf");
+    localStorage.removeItem("numeroConta");
+    localStorage.removeItem("clienteData");
+    localStorage.removeItem("loginData");
+  }, []);
 
   const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formattedCpf = formatCPF(e.target.value.replace(/\D/g, ""));
+    const value = e.target.value || "";
+    const formattedCpf = formatCPF(value.replace(/\D/g, ""));
     setCpf(formattedCpf);
   };
 
   const handlePinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const pinValue = e.target.value.replace(/\D/g, "").slice(0, 4);
+    const value = e.target.value || "";
+    const pinValue = value.replace(/\D/g, "").slice(0, 4);
     setPin(pinValue);
   };
 
-  const handleLogin = async () => {
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Verificação de segurança extra
+    if (cpf === undefined || cpf === null) {
+      setError("Erro interno: CPF não definido");
+      return;
+    }
+
     if (!cpf || !pin) {
       setError("Por favor, preencha CPF e PIN");
+      return;
+    }
+
+    if (!validateCPF(cpf)) {
+      setError("CPF deve ter 11 dígitos");
       return;
     }
 
@@ -34,35 +60,51 @@ function Home() {
     setError("");
 
     try {
-      const response = await clienteService.buscarInfoCompleta(
-        cpf.replace(/\D/g, "")
-      );
-      const clienteData = response.data;
+      const cpfLimpo = cpf?.replace(/\D/g, "") || "";
 
-      // Verificar se existe conta e se o PIN está correto
-      if (clienteData.contas && clienteData.contas.length > 0) {
-        const conta = clienteData.contas[0];
-        if (conta.pin.toString() === pin) {
-          // Armazenar dados no localStorage
-          localStorage.setItem("clienteCpf", cpf.replace(/\D/g, ""));
-          localStorage.setItem("clienteData", JSON.stringify(clienteData));
+      const loginData = {
+        cpf: cpfLimpo,
+        pin,
+      };
 
-          // Redirecionar para página de conta
-          window.location.href = "/contas";
-        } else {
-          setError("PIN incorreto");
-        }
+      const response = await authService.login(loginData);
+
+      if (response.data.sucesso && response.data.numeroConta) {
+        const clienteDataResponse = await clienteService.buscarInfoCompleta(
+          cpfLimpo
+        );
+
+        localStorage.setItem("clienteCpf", cpfLimpo);
+        localStorage.setItem(
+          "numeroConta",
+          response.data.numeroConta.toString()
+        );
+        localStorage.setItem(
+          "clienteData",
+          JSON.stringify(clienteDataResponse.data)
+        );
+        localStorage.setItem("loginData", JSON.stringify(response.data));
+
+        navigate("/contas");
       } else {
-        setError("Nenhuma conta encontrada para este CPF");
+        setError(response.data.mensagem || "Erro ao fazer login");
       }
-    } catch (error: unknown) {
-      console.error("Erro ao acessar conta:", error);
-      if (error && typeof error === "object" && "response" in error) {
-        const axiosError = error as { response?: { status?: number } };
-        if (axiosError.response?.status === 404) {
+    } catch (err: unknown) {
+      if (err && typeof err === "object" && "response" in err) {
+        const axiosError = err as {
+          response?: {
+            status?: number;
+            data?: { mensagem?: string };
+          };
+        };
+        if (axiosError.response?.status === 401) {
+          setError("CPF ou PIN incorreto");
+        } else if (axiosError.response?.status === 404) {
           setError("Cliente não encontrado");
         } else {
-          setError("Erro ao acessar conta. Tente novamente.");
+          setError(
+            axiosError.response?.data?.mensagem || "Erro ao acessar conta"
+          );
         }
       } else {
         setError("Erro ao acessar conta. Tente novamente.");
@@ -71,6 +113,7 @@ function Home() {
       setLoading(false);
     }
   };
+
   return (
     <div className="space-y-6">
       <div className="relative flex items-center justify-center min-h-[320px] mb-8 -mt-8 w-screen left-1/2 right-1/2 -translate-x-1/2">

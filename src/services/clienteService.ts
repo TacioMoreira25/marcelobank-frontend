@@ -19,6 +19,6 @@ export const clienteService = {
   },
 
   buscarInfoCompleta: (cpf: string) => {
-    return api.get(`/clientes/${cpf}/completo`);
+    return api.get(`/clientes/cpf/${cpf}/completo`);
   }
 };

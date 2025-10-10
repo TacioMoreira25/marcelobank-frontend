@@ -3,30 +3,7 @@ export const validateCPF = (cpf: string): boolean => {
   const cleanCPF = cpf.replace(/\D/g, "");
 
   // Verifica se tem 11 dígitos
-  if (cleanCPF.length !== 11) return false;
-
-  // Verifica se todos os dígitos são iguais
-  if (/^(\d)\1{10}$/.test(cleanCPF)) return false;
-
-  // Valida primeiro dígito verificador
-  let sum = 0;
-  for (let i = 0; i < 9; i++) {
-    sum += parseInt(cleanCPF.charAt(i)) * (10 - i);
-  }
-  let digit1 = (sum * 10) % 11;
-  if (digit1 === 10 || digit1 === 11) digit1 = 0;
-  if (digit1 !== parseInt(cleanCPF.charAt(9))) return false;
-
-  // Valida segundo dígito verificador
-  sum = 0;
-  for (let i = 0; i < 10; i++) {
-    sum += parseInt(cleanCPF.charAt(i)) * (11 - i);
-  }
-  let digit2 = (sum * 10) % 11;
-  if (digit2 === 10 || digit2 === 11) digit2 = 0;
-  if (digit2 !== parseInt(cleanCPF.charAt(10))) return false;
-
-  return true;
+  return cleanCPF.length === 11;
 };
 
 export const validateEmail = (email: string): boolean => {

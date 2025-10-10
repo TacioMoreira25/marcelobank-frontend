@@ -1,33 +1,39 @@
-import api from '../api/config';
-import type { Conta } from '../types';
-import type { Cartao } from '../types';
-
+import api from "../api/config";
+import type { Conta, CriarContaDTO } from "../types";
+import type { Cartao } from "../types";
 
 export const contaService = {
-
   listarContas: () => {
-    return api.get<Conta[]>('/contas');
+    return api.get<Conta[]>("/contas");
   },
 
   buscarPorNumero: (numeroConta: number) => {
     return api.get<Conta>(`/contas/${numeroConta}`);
   },
 
-  criarConta: (conta: Conta) => {
-    return api.post<Conta>('/contas', conta);
+  buscarPorCpf: (cpf: string) => {
+    return api.get<Conta[]>(`/contas/cliente/${cpf}`);
+  },
+
+  criarConta: (criarContaDTO: CriarContaDTO) => {
+    return api.post<Conta>("/contas", criarContaDTO);
   },
 
   consultarSaldo: (numeroConta: number) => {
     return api.get<Conta>(`/contas/${numeroConta}/saldo`);
   },
 
-  emitirCartao: (numeroCartao: number, numeroConta: number,
-    tipoCartao: string, limite: number) => {
-    return api.post<Cartao>('/cartoes/emitir', {
+  emitirCartao: (
+    numeroCartao: number,
+    numeroConta: number,
+    tipoCartao: string,
+    limite: number
+  ) => {
+    return api.post<Cartao>("/cartoes/emitir", {
       numeroCartao,
       numeroConta,
       tipoCartao,
-      limite
+      limite,
     });
   },
 
@@ -37,5 +43,5 @@ export const contaService = {
 
   listarCartoesPorCliente: (cpf: string) => {
     return api.get<Cartao[]>(`/cartoes/cliente/${cpf}`);
-  }
+  },
 };

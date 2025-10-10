@@ -1,21 +1,22 @@
-export type TipoConta = 'CORRENTE' | 'POUPANCA';
+export type TipoConta = "CORRENTE" | "POUPANCA";
 
-export type TipoCartao = 'CREDITO' | 'DEBITO' | 'CREDITO_DEBITO' | 'VIRTUAL' | 'PRE_PAGO';
+export type TipoCartao = "CREDITO" | "DEBITO" | "PRE_PAGO";
 
 export type StatusEmprestimo =
-  | 'SOLICITADO'
-  | 'EM_ANALISE'
-  | 'APROVADO'
-  | 'REPROVADO'
-  | 'LIQUIDADO'
-  | 'EM_ATRASO';
+  | "SOLICITADO"
+  | "EM_ANALISE"
+  | "APROVADO"
+  | "REPROVADO"
+  | "LIQUIDADO"
+  | "EM_ATRASO";
 
 export type StatusTransacao =
-  | 'PENDENTE'
-  | 'CONCLUIDA'
-  | 'CANCELADA'
-  | 'FALHA'
-  | 'SALDO_INSUFICIENTE';
+  | "PENDENTE"
+  | "CONCLUIDA"
+  | "CANCELADA"
+  | "FALHA"
+  | "SALDO_INSUFICIENTE"
+  | "ESTORNADA";
 
 export interface Cliente {
   idCliente?: number;
@@ -39,12 +40,19 @@ export interface Agencia {
 export interface Conta {
   numeroConta: number;
   tipoConta: TipoConta;
-  pin: number;
+  pin: number | string;
   saldo: number;
   dataAbertura?: string;
   status?: string;
   cliente?: Cliente;
   agencia?: Agencia;
+}
+
+export interface CriarContaDTO {
+  cpf: string;
+  tipoConta: TipoConta;
+  pin: string;
+  saldoInicial: number;
 }
 
 export interface Cartao {
@@ -59,8 +67,8 @@ export interface Cartao {
 
 export interface Transacao {
   idTransacao?: number;
-  contaOrigem?: Conta;
-  contaDestino?: Conta;
+  contaOrigem?: Conta | number;
+  contaDestino?: Conta | number;
   tipoTransacao: string;
   valor: number;
   dataTransacao?: string;
@@ -80,4 +88,33 @@ export interface Emprestimo {
   dataAprovacao?: string;
   status?: StatusEmprestimo;
   saldoDevedor?: number;
+}
+
+export interface LoginRequest {
+  cpf: string;
+  pin: string;
+}
+
+export interface LoginResponse {
+  sucesso: boolean;
+  numeroConta?: number;
+  nomeCliente?: string;
+  cpfCliente?: string;
+  tipoConta?: string;
+  saldo?: number;
+  status?: string;
+  mensagem?: string;
+}
+
+export interface ClienteCompleto {
+  cliente?: Cliente;
+  contas?: Conta[];
+  cartoes?: Cartao[];
+  emprestimos?: Emprestimo[];
+  nome?: string;
+  cpf?: string;
+  email?: string;
+  telefone?: string;
+  dataNascimento?: string;
+  endereco?: string;
 }
