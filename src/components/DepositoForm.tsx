@@ -9,7 +9,7 @@ interface Props {
 const DepositoForm: React.FC<Props> = ({ value, onChange, onSubmit }) => {
   return (
     <form onSubmit={onSubmit} className="space-y-5">
-      <div className="bg-gradient-to-br from-rose-50 to-white p-6 rounded-lg border border-rose-100">
+      <div className="bg-gradient-to-br from-white to-white p-6 rounded-lg">
         <label className="block text-sm font-semibold text-gray-700 mb-3">
           Valor do Depósito
         </label>

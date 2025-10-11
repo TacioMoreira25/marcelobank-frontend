@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import MBank from "../assets/MBank.png";
+import MBank from "../assets/LogoMB.png";
 import type { ClienteCompleto } from "../types";
 import ProfileDropdown from "./ProfileDropdown";
 
