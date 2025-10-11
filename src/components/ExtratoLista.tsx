@@ -7,7 +7,7 @@ interface Props {
   currentAccount?: number;
 }
 
-const ExtractList: React.FC<Props> = ({ items, currentAccount }) => {
+const ExtratoLista: React.FC<Props> = ({ items, currentAccount }) => {
   if (!items || items.length === 0)
     return (
       <div className="border p-4 rounded bg-white">Nenhuma transação.</div>
@@ -56,9 +56,6 @@ const ExtractList: React.FC<Props> = ({ items, currentAccount }) => {
         const origem = getContaNumero(t.contaOrigem);
         const destino = getContaNumero(t.contaDestino);
 
-        // Mapeia por campos quando possível
-        // Prioriza o tipo vindo do backend
-        // Normaliza tipo vindo do backend (se existir)
         const normalizeTipo = (v: string): string => {
           const up = v.toUpperCase();
           if (up.includes("DEPOSI")) return "Depósito";
@@ -82,7 +79,6 @@ const ExtractList: React.FC<Props> = ({ items, currentAccount }) => {
           computedTipo = "Saque";
         }
 
-        // Se ainda não conseguiu, tenta pelo tipoRaw/descricao
         if (!computedTipo) {
           const raw = tipoRaw.toUpperCase();
           const dsc = descRaw.toUpperCase();
@@ -97,14 +93,12 @@ const ExtractList: React.FC<Props> = ({ items, currentAccount }) => {
 
         const tipoUpper = computedTipo.toUpperCase();
 
-        // Ajuste visual de status (ex.: CONCLUIDA -> CONCLUÍDA)
         const rawStatus = ((t.status as string) || "").toUpperCase();
         const statusMap: Record<string, string> = {
           CONCLUIDA: "CONCLUÍDA",
         };
         const statusLabel = statusMap[rawStatus] || rawStatus || "";
 
-        // Data em ISO (YYYY-MM-DD)
         let dataIso = "";
         const dataRaw = getStr(["dataTransacao", "data"]);
         if (dataRaw) {
@@ -113,15 +107,13 @@ const ExtractList: React.FC<Props> = ({ items, currentAccount }) => {
             : new Date(dataRaw).toISOString().slice(0, 10);
         }
 
-        // Crédito/Débito relativo à conta atual
         let isCredit =
           (!!currentAccount && destino === currentAccount) ||
-          (!origem && !!destino); // depósitos entram
+          (!origem && !!destino);
         let isDebit =
           (!!currentAccount && origem === currentAccount) ||
-          (!!origem && !destino); // saques saem
+          (!!origem && !destino);
 
-        // Fallback por tipo quando origem/destino não vierem
         if (!origem && !destino) {
           if (tipoUpper.includes("DEPOSI")) isCredit = true;
           if (tipoUpper.includes("SAQUE")) isDebit = true;
@@ -177,4 +169,4 @@ const ExtractList: React.FC<Props> = ({ items, currentAccount }) => {
   );
 };
 
-export default ExtractList;
+export default ExtratoLista;

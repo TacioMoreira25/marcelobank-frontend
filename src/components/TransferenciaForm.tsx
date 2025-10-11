@@ -10,7 +10,7 @@ interface Props {
   onSubmit: (e: React.FormEvent) => void;
 }
 
-const TransferForm: React.FC<Props> = ({ values, onChange, onSubmit }) => {
+const TransferenciaForm: React.FC<Props> = ({ values, onChange, onSubmit }) => {
   return (
     <form onSubmit={onSubmit} className="border p-3 rounded space-y-2">
       <div>
@@ -54,4 +54,4 @@ const TransferForm: React.FC<Props> = ({ values, onChange, onSubmit }) => {
   );
 };
 
-export default TransferForm;
+export default TransferenciaForm;

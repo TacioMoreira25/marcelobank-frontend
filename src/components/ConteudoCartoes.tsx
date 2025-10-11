@@ -2,14 +2,14 @@ import React from "react";
 import type { Cartao } from "../types";
 import { formatCurrency } from "../utils/formatters";
 
-interface CardsContentProps {
+interface ConteudoCartoesProps {
   cartoes: Cartao[];
   onEmitir: () => void;
   onBloquear: (numeroCartao: number) => void;
   onDesbloquear: (numeroCartao: number) => void;
 }
 
-const CardsContent: React.FC<CardsContentProps> = ({
+const ConteudoCartoes: React.FC<ConteudoCartoesProps> = ({
   cartoes,
   onEmitir,
   onBloquear,
@@ -29,7 +29,6 @@ const CardsContent: React.FC<CardsContentProps> = ({
           </button>
         </div>
 
-        {/* Lista de cartões */}
         {cartoes.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-500 text-lg">Nenhum cartão emitido</p>
@@ -51,8 +50,8 @@ const CardsContent: React.FC<CardsContentProps> = ({
                       {cartao.tipoCartao === "DEBITO"
                         ? "Débito"
                         : cartao.tipoCartao === "CREDITO"
-                          ? "Crédito"
-                          : "Pré-pago"}
+                        ? "Crédito"
+                        : "Pré-pago"}
                     </p>
                   </div>
                   <span
@@ -69,9 +68,7 @@ const CardsContent: React.FC<CardsContentProps> = ({
                 <div className="mb-4">
                   <p className="text-xs text-gray-600 mb-1">NÚMERO</p>
                   <p className="text-lg font-mono text-gray-800">
-                    **** **** **** {cartao.numeroCartao
-                      .toString()
-                      .slice(-4)}
+                    **** **** **** {cartao.numeroCartao.toString().slice(-4)}
                   </p>
                 </div>
 
@@ -85,9 +82,7 @@ const CardsContent: React.FC<CardsContentProps> = ({
                 <div className="flex gap-2">
                   {cartao.status === "ATIVO" ? (
                     <button
-                      onClick={() =>
-                        onBloquear(cartao.numeroCartao as number)
-                      }
+                      onClick={() => onBloquear(cartao.numeroCartao as number)}
                       className="flex-1 px-3 py-2 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 font-medium transition"
                     >
                       Bloquear
@@ -112,4 +107,4 @@ const CardsContent: React.FC<CardsContentProps> = ({
   );
 };
 
-export default CardsContent;
+export default ConteudoCartoes;

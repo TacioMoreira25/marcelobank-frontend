@@ -6,7 +6,7 @@ interface Props {
   onSubmit: (e: React.FormEvent) => void;
 }
 
-const SaqueForm: React.FC<Props> = ({ values, onChange, onSubmit }) => {
+const Saque: React.FC<Props> = ({ values, onChange, onSubmit }) => {
   return (
     <form onSubmit={onSubmit} className="border p-3 rounded space-y-2">
       <div>
@@ -38,4 +38,4 @@ const SaqueForm: React.FC<Props> = ({ values, onChange, onSubmit }) => {
   );
 };
 
-export default SaqueForm;
+export default Saque;

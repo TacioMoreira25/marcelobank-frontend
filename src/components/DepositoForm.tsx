@@ -6,7 +6,7 @@ interface Props {
   onSubmit: (e: React.FormEvent) => void;
 }
 
-const DepositForm: React.FC<Props> = ({ value, onChange, onSubmit }) => {
+const DepositoForm: React.FC<Props> = ({ value, onChange, onSubmit }) => {
   return (
     <form onSubmit={onSubmit} className="border p-3 rounded space-y-2">
       <div>
@@ -29,4 +29,4 @@ const DepositForm: React.FC<Props> = ({ value, onChange, onSubmit }) => {
   );
 };
 
-export default DepositForm;
+export default DepositoForm;

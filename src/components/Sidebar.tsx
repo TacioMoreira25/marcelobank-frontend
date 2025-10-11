@@ -29,9 +29,9 @@ const Sidebar: React.FC<Props> = ({ active, onChangeSection, onLogout }) => {
   ];
 
   return (
-    <div className="w-64 bg-white border-r border-gray-200 overflow-y-auto h-full flex flex-col">
+    <div className="w-64 bg-white border-r border-gray-200 h-full flex flex-col">
       {/* Menu de navegação */}
-      <nav className="flex-1 p-4 space-y-1">
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {sections.map((section) => (
           <button
             key={section.id}
@@ -46,12 +46,10 @@ const Sidebar: React.FC<Props> = ({ active, onChangeSection, onLogout }) => {
           </button>
         ))}
       </nav>
-
-      {/* Rodapé com botão de sair */}
-      <div className="p-4 border-t border-gray-200 bg-gray-50">
+      <div className="p-4 border-t border-gray-200">
         <button
           onClick={onLogout}
-          className="w-full text-left text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg text-sm"
+          className="w-full text-left px-4 py-3 rounded-lg transition font-medium text-red-600 hover:bg-red-50"
         >
           Sair
         </button>

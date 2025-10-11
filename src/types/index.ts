@@ -118,3 +118,11 @@ export interface ClienteCompleto {
   dataNascimento?: string;
   endereco?: string;
 }
+
+// DTO para atualização parcial de Cliente
+export interface AtualizarClienteDTO {
+  nome?: string;
+  email?: string;
+  telefone?: string;
+  endereco?: string;
+}

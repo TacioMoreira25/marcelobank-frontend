@@ -23,6 +23,10 @@ export const contaService = {
     return api.get<Conta>(`/contas/${numeroConta}/saldo`);
   },
 
+  deletarConta: (numeroConta: number) => {
+    return api.delete(`/contas/${numeroConta}`);
+  },
+
   emitirCartao: (
     numeroCartao: number,
     numeroConta: number,
