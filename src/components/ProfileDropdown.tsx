@@ -19,8 +19,8 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
   onLogout,
   onContaCreated,
   onSwitchAccount,
-}) => {
-  // Normalize pessoa (nested cliente.cliente or top-level)
+}) =>
+  {
   const pessoaInicial = useMemo(() => {
     const nested = cliente.cliente;
     let cpfLS = "";
@@ -49,7 +49,6 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
 
   const [pessoa, setPessoa] = useState(pessoaInicial);
 
-  // Atualiza estado base quando objeto cliente muda
   useEffect(() => {
     setPessoa(pessoaInicial);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -62,7 +61,6 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
     pessoaInicial.dataNascimento,
   ]);
 
-  // Hidrata dados faltantes via backend quando possível
   useEffect(() => {
     const precisa =
       !pessoa.nome || !pessoa.email || !pessoa.telefone || !pessoa.endereco;
@@ -105,7 +103,6 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
   const deriveTipoLabel = (rawVal: unknown): string => {
     if (!rawVal) return "-";
     const s = String(rawVal).toUpperCase();
-    // Casos: "CORRENTE", "POUPANCA", "Conta Corrente", "Conta Poupança", etc.
     if (s.includes("CORREN")) return "Corrente";
     if (s.includes("POUP")) return "Poupança";
     if (s === "C" || s === "CC") return "Corrente";
@@ -181,7 +178,6 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
     setLoading(true);
     try {
       if (!pessoa.cpf) throw new Error("CPF não encontrado");
-      // Envia somente campos alterados e não vazios
       const payload: {
         nome?: string;
         email?: string;
@@ -314,7 +310,6 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
                   {tipoContaLabel}
                 </div>
               </div>
-              {/* Saldo removido conforme solicitação */}
             </div>
           </div>
 
@@ -361,7 +356,6 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
                                 String(c.numeroConta)
                               );
                             } catch (err) {
-                              // ignore localStorage issues silently
                               console.debug(
                                 "Falha ao persistir numeroConta:",
                                 err

@@ -35,7 +35,7 @@ export const formatDate = (date: string): string => {
 export const formatDateForBackend = (dateString: string): string => {
   if (!dateString) return "";
 
-  const date = new Date(dateString + "T00:00:00"); // Adiciona horário para evitar timezone issues
+  const date = new Date(dateString + "T00:00:00"); 
   const day = date.getDate().toString().padStart(2, "0");
   const month = (date.getMonth() + 1).toString().padStart(2, "0");
   const year = date.getFullYear();

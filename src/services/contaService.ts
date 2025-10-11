@@ -1,6 +1,5 @@
 import api from "../api/config";
 import type { Conta, CriarContaDTO } from "../types";
-import type { Cartao } from "../types";
 
 export const contaService = {
   listarContas: () => {
@@ -25,27 +24,5 @@ export const contaService = {
 
   deletarConta: (numeroConta: number) => {
     return api.delete(`/contas/${numeroConta}`);
-  },
-
-  emitirCartao: (
-    numeroCartao: number,
-    numeroConta: number,
-    tipoCartao: string,
-    limite: number
-  ) => {
-    return api.post<Cartao>("/cartoes/emitir", {
-      numeroCartao,
-      numeroConta,
-      tipoCartao,
-      limite,
-    });
-  },
-
-  bloquear: (numeroCartao: number) => {
-    return api.put(`/cartoes/${numeroCartao}/bloquear`);
-  },
-
-  listarCartoesPorCliente: (cpf: string) => {
-    return api.get<Cartao[]>(`/cartoes/cliente/${cpf}`);
   },
 };

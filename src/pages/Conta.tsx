@@ -12,6 +12,7 @@ import type {
   Cartao,
   Conta,
 } from "../types";
+import type { ActiveSection as Section } from "../types/conta";
 import TopBar from "../components/TopBar";
 import Sidebar from "../components/Sidebar";
 import ContentArea from "../components/ContentArea";
@@ -25,19 +26,9 @@ import ExtratoLista from "../components/ExtratoLista";
 import Emprestimos from "../components/Emprestimos";
 import { formatCurrency } from "../utils/formatters";
 
-type Section =
-  | "overview"
-  | "transfer"
-  | "deposit"
-  | "saque"
-  | "extract"
-  | "loan"
-  | "cards";
-
 function Conta() {
   const navigate = useNavigate();
 
-  // ===== ESTADOS PRINCIPAIS =====
   const [cliente, setCliente] = useState<ClienteCompleto | null>(null);
   const [numeroConta, setNumeroConta] = useState<number | null>(null);
   const [saldo, setSaldo] = useState(0);
@@ -47,12 +38,10 @@ function Conta() {
 
   const [, setSaldoAjuste] = useState(0);
 
-  // ===== LISTAS DE DADOS =====
   const [transacoes, setTransacoes] = useState<Transacao[]>([]);
   const [emprestimos, setEmprestimos] = useState<Emprestimo[]>([]);
   const [cartoes, setCartoes] = useState<Cartao[]>([]);
 
-  // ===== FORMULÁRIOS =====
   const [transfer, setTransfer] = useState({
     contaDestino: "",
     valor: "",
@@ -62,13 +51,11 @@ function Conta() {
   const [saque, setSaque] = useState({ valor: "", pin: "" });
   const [loan, setLoan] = useState({ valor: "", prazo: "12" });
 
-  // ===== MODAL CARTÃO =====
   const [showModalCartao, setShowModalCartao] = useState(false);
   const [tipoCartaoSelecionado, setTipoCartaoSelecionado] = useState("DEBITO");
   const [limiteCartaoSelecionado, setLimiteCartaoSelecionado] =
     useState("1000");
 
-  // ===== FUNÇÕES AUXILIARES =====
   const toArray = <T,>(
     input: unknown,
     keys: string[] = [
@@ -106,7 +93,6 @@ function Conta() {
     return undefined;
   };
 
-  // Ajuste local de saldo (para quando o backend não debita no ato)
   const ajusteKey = (cpf: string, conta: number) =>
     `mbank_saldo_ajuste_${cpf}_${conta}`;
   const getAjusteFromLS = useCallback((cpf: string, conta: number): number => {
@@ -133,7 +119,6 @@ function Conta() {
     []
   );
 
-  // ===== CARREGAMENTO DE DADOS =====
   const fetchAll = useCallback(
     async (
       cpf: string,
@@ -154,7 +139,6 @@ function Conta() {
         setCliente(dados);
 
         const saldoApi = pickSaldo(saldoResp?.data);
-        // Busca o saldo local da conta atualmente selecionada, não da primeira
         const saldoLocal = (() => {
           const contas = (
             Array.isArray(dados?.contas) ? (dados?.contas as Conta[]) : []
@@ -196,13 +180,11 @@ function Conta() {
     }
 
     setNumeroConta(conta);
-    // Inicializa ajuste local em memória
     const aj = getAjusteFromLS(cpf, conta);
     setSaldoAjuste(aj);
     fetchAll(cpf, conta);
   }, [navigate, fetchAll, getAjusteFromLS]);
 
-  // ===== AÇÕES =====
   const doLogout = () => {
     localStorage.removeItem("clienteCpf");
     localStorage.removeItem("numeroConta");
@@ -211,7 +193,6 @@ function Conta() {
     navigate("/");
   };
 
-  // Transferência
   const doTransfer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!numeroConta) return;
@@ -236,7 +217,6 @@ function Conta() {
     }
   };
 
-  // Depósito
   const doDeposit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!numeroConta) return;
@@ -256,7 +236,6 @@ function Conta() {
     }
   };
 
-  // Saque
   const doSaque = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!numeroConta) return;
@@ -280,7 +259,6 @@ function Conta() {
     }
   };
 
-  // Empréstimo
   const doSolicitarEmprestimo = async (
     e?: React.FormEvent | React.MouseEvent
   ) => {
@@ -339,7 +317,6 @@ function Conta() {
 
       if (idEmp) {
         await emprestimoService.aprovar(idEmp, aprovado);
-        // Zera ajuste local ao mexer com empréstimos para sempre refletir backend
         const cpfLocal = localStorage.getItem("clienteCpf") || "";
         if (cpfLocal && typeof numeroConta === "number") {
           setAjusteToLS(cpfLocal, numeroConta, 0);
@@ -382,7 +359,6 @@ function Conta() {
       alert("Conta não encontrada na sessão");
       return;
     }
-    // Usa o PIN vindo da UI (modal); se não vier, solicita via prompt
     const pin =
       pinFromUi ??
       (window.prompt("Digite seu PIN para confirmar o pagamento da parcela:") ||
@@ -394,12 +370,9 @@ function Conta() {
     const cpf = localStorage.getItem("clienteCpf") || "";
     let sacou = false;
     try {
-      // 1) Debita da conta (saque)
       await transacaoService.sacar(numeroConta, valor, pin);
       sacou = true;
-      // 2) Registra pagamento do empréstimo
       await emprestimoService.pagarParcela(id, valor);
-      // 3) Zera ajuste local e refaz fetch para refletir o backend
       if (cpf) {
         setAjusteToLS(cpf, numeroConta, 0);
         setSaldoAjuste(0);
@@ -407,7 +380,6 @@ function Conta() {
       await fetchAll(cpf, numeroConta);
       alert("Parcela paga com sucesso!");
     } catch {
-      // Se saque já ocorreu e o pagamento falhou, tenta estornar com depósito
       if (sacou) {
         try {
           await transacaoService.depositar(numeroConta, valor);
@@ -419,7 +391,6 @@ function Conta() {
     }
   };
 
-  // Cartão - Emitir
   const doEmitirCartao = async () => {
     const cpf = localStorage.getItem("clienteCpf") || "";
     if (!cpf || !numeroConta) {
@@ -458,7 +429,6 @@ function Conta() {
     }
   };
 
-  // Cartão - Bloquear
   const doBloquear = async (numeroCartao: number) => {
     const cpf = localStorage.getItem("clienteCpf") || "";
     if (!cpf || !numeroConta) return;
@@ -471,7 +441,6 @@ function Conta() {
     }
   };
 
-  // Cartão - Desbloquear
   const doDesbloquear = async (numeroCartao: number) => {
     const cpf = localStorage.getItem("clienteCpf") || "";
     if (!cpf || !numeroConta) return;
@@ -484,7 +453,6 @@ function Conta() {
     }
   };
 
-  // ===== HANDLER PARA RECARREGAR DADOS =====
   const handleReloadData = async () => {
     const cpf = localStorage.getItem("clienteCpf") || "";
     if (numeroConta) {
@@ -492,7 +460,6 @@ function Conta() {
     }
   };
 
-  // ===== TROCAR CONTA ATIVA =====
   const handleSwitchAccount = async (novoNumeroConta: number) => {
     try {
       setNumeroConta(novoNumeroConta);
@@ -511,7 +478,6 @@ function Conta() {
     }
   };
 
-  // ===== LOADING =====
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -523,7 +489,6 @@ function Conta() {
     );
   }
 
-  // ===== ERROR =====
   if (error || !cliente) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -542,7 +507,6 @@ function Conta() {
     );
   }
 
-  // ===== RENDER PRINCIPAL =====
   return (
     <div className="flex flex-col h-screen bg-gray-100">
       {/* TOP BAR */}

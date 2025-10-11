@@ -1,15 +1,5 @@
 import React from "react";
-//
-//
-
-type Section =
-  | "overview"
-  | "transfer"
-  | "deposit"
-  | "saque"
-  | "extract"
-  | "loan"
-  | "cards";
+import type { ActiveSection as Section } from "../types/conta";
 
 interface Props {
   active: Section;

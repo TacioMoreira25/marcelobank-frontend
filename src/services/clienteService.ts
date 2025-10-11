@@ -2,10 +2,6 @@ import api from "../api/config";
 import type { Cliente, AtualizarClienteDTO } from "../types";
 
 export const clienteService = {
-  listar: () => {
-    return api.get<Cliente[]>("/clientes");
-  },
-
   criar: (cliente: Cliente) => {
     return api.post<Cliente>("/clientes", cliente);
   },
@@ -15,9 +11,6 @@ export const clienteService = {
 
   buscarPorCpf: (cpf: string) => {
     return api.get<Cliente>(`/clientes/cpf/${cpf}`);
-  },
-  deletar: (cpf: string) => {
-    return api.delete(`/clientes/cpf/${cpf}`);
   },
 
   buscarInfoCompleta: (cpf: string) => {

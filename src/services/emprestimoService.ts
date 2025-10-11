@@ -1,9 +1,9 @@
-import api from '../api/config';
-import type { Emprestimo } from '../types';
+import api from "../api/config";
+import type { Emprestimo } from "../types";
 
 export const emprestimoService = {
   listar: () => {
-    return api.get<Emprestimo[]>('/emprestimos');
+    return api.get<Emprestimo[]>("/emprestimos");
   },
 
   buscarPorId: (id: number) => {
@@ -15,7 +15,7 @@ export const emprestimoService = {
   },
 
   solicitar: (cpf: string, valorSolicitado: number, prazoMeses: number) => {
-    return api.post<Emprestimo>('/emprestimos', {
+    return api.post<Emprestimo>("/emprestimos", {
       cpf,
       valorSolicitado,
       prazoMeses,
@@ -32,9 +32,5 @@ export const emprestimoService = {
     return api.post(`/emprestimos/${id}/pagar-parcela`, {
       valorPagamento,
     });
-  },
-
-  consultarSaldoDevedor: (cpf: string) => {
-    return api.get(`/emprestimos/cliente/${cpf}/saldo-devedor`);
   },
 };

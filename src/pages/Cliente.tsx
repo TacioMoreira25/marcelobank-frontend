@@ -137,7 +137,6 @@ function ClientePage() {
     setSuccessMessage("");
 
     try {
-      // 1. Criar cliente
       const dataConvertida = formatDateForBackend(formData.dataNascimento);
 
       const clienteData: Cliente = {
@@ -155,7 +154,6 @@ function ClientePage() {
         throw new Error("Erro ao criar cliente");
       }
 
-      // 2. Criar conta - usar formato DTO que o backend espera
       const criarContaDTO: CriarContaDTO = {
         cpf: formData.cpf.replace(/\D/g, ""),
         tipoConta: formData.tipoConta,

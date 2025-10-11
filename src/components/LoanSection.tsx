@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { formatCurrency } from "../utils/formatters";
 
 type LoanItem = {
   idEmprestimo?: number | string;
@@ -46,13 +47,6 @@ const normalizeId = (v: unknown): number | undefined => {
     if (!Number.isNaN(n)) return n;
   }
   return undefined;
-};
-
-const formatCurrency = (value: number): string => {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(value);
 };
 
 const LoanSection: React.FC<LoanSectionProps> = ({

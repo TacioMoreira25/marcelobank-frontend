@@ -12,7 +12,6 @@ function Home() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  // Logout automático quando chega na Home
   useEffect(() => {
     localStorage.removeItem("clienteCpf");
     localStorage.removeItem("numeroConta");
@@ -35,7 +34,6 @@ function Home() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Verificação de segurança extra
     if (cpf === undefined || cpf === null) {
       setError("Erro interno: CPF não definido");
       return;
