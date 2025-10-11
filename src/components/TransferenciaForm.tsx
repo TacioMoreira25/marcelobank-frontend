@@ -12,35 +12,35 @@ interface Props {
 
 const TransferenciaForm: React.FC<Props> = ({ values, onChange, onSubmit }) => {
   return (
-    <form onSubmit={onSubmit} className="border p-3 rounded space-y-2">
-      <div>
-        <label>Conta destino</label>
+    <form onSubmit={onSubmit} >
+      <div className="mb-4 flex flex-col">
+        <label className="mb-1">Conta destino</label>
         <input
-          className="border p-1 ml-2"
+          className="border p-1 rounded opacity-25"
           type="number"
           value={values.contaDestino}
           onChange={(e) => onChange({ contaDestino: e.target.value })}
         />
       </div>
-      <div>
-        <label>Valor</label>
+      <div className="mb-4 flex flex-col">
+        <label className="mb-1">Valor</label>
         <input
-          className="border p-1 ml-2"
+          className="border p-1 rounded opacity-25"
           type="number"
           step="0.01"
           value={values.valor}
           onChange={(e) => onChange({ valor: e.target.value })}
         />
       </div>
-      <div>
-        <label>PIN</label>
+      <div className="mb-4 flex flex-col">
+        <label className="mb-1">PIN</label>
         <input
-          className="border p-1 ml-2"
+          className="border p-1 rounded opacity-25"
           type="password"
           maxLength={4}
           value={values.pin}
           onChange={(e) =>
-            onChange({ pin: e.target.value.replace(/\D/g, "").slice(0, 4) })
+        onChange({ pin: e.target.value.replace(/\D/g, "").slice(0, 4) })
           }
         />
       </div>
