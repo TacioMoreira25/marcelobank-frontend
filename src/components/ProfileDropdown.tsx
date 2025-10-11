@@ -19,8 +19,7 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
   onLogout,
   onContaCreated,
   onSwitchAccount,
-}) =>
-  {
+}) => {
   const pessoaInicial = useMemo(() => {
     const nested = cliente.cliente;
     let cpfLS = "";
@@ -51,8 +50,8 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
 
   useEffect(() => {
     setPessoa(pessoaInicial);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    pessoaInicial,
     pessoaInicial.cpf,
     pessoaInicial.nome,
     pessoaInicial.email,
@@ -80,7 +79,7 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
           dataNascimento: prev.dataNascimento || c.dataNascimento || "",
         }));
       } catch {
-        // silencioso: se falhar, mantém como está
+        // silencioso
       }
     })();
     return () => {
@@ -153,7 +152,7 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
           undefined;
         if (!cancelled) setTipoContaLabel(deriveTipoLabel(raw));
       } catch {
-        // silencio: mantém '-'
+        // silencio
       }
     })();
     return () => {
@@ -242,70 +241,78 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
   };
 
   return (
-    <div className="absolute right-0 mt-2 w-96 bg-white border border-gray-200 rounded-lg shadow-xl z-50">
-      <div className="bg-gradient-to-r from-pink-500 to-pink-600 text-white p-4 rounded-t-lg">
-        <p className="text-lg font-bold">{pessoa.nome || "-"}</p>
-        <p className="text-sm text-pink-100">{pessoa.cpf || "-"}</p>
+    <div className="absolute right-0 mt-2 w-96 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+      <div className="bg-gradient-to-r from-pink-500 to-pink-600 text-white p-6 rounded-t-lg">
+        <p className="text-lg font-semibold">{pessoa.nome || "-"}</p>
       </div>
 
       {!showEditPerfil && !showCreateConta && (
-        <div className="p-4 space-y-4 border-b border-gray-200">
+        <div className="p-5 space-y-4 border-b border-gray-200">
           <div>
-            <p className="text-xs text-gray-600 font-semibold mb-2">
-              SEUS DADOS
+            <p className="text-xs text-gray-600 font-semibold uppercase tracking-wide mb-3">
+              Dados Pessoais
             </p>
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
-                <div className="text-gray-500 text-xs">Nome</div>
-                <div className="text-gray-800 font-medium break-words">
-                  {pessoa.nome || "-"}
+                <div className="text-gray-500 text-xs font-medium mb-1">
+                  CPF
                 </div>
-              </div>
-              <div>
-                <div className="text-gray-500 text-xs">CPF</div>
                 <div className="text-gray-800 font-medium">
                   {pessoa.cpf || "-"}
                 </div>
               </div>
               <div>
-                <div className="text-gray-500 text-xs">Email</div>
+                <div className="text-gray-500 text-xs font-medium mb-1">
+                  Telefone
+                </div>
+                <div className="text-gray-800 font-medium">
+                  {pessoa.telefone || "-"}
+                </div>
+              </div>
+              <div className="col-span-2">
+                <div className="text-gray-500 text-xs font-medium mb-1">
+                  Email
+                </div>
                 <div className="text-gray-800 font-medium break-words">
                   {pessoa.email || "-"}
                 </div>
               </div>
               <div>
-                <div className="text-gray-500 text-xs">Telefone</div>
-                <div className="text-gray-800 font-medium">
-                  {pessoa.telefone || "-"}
+                <div className="text-gray-500 text-xs font-medium mb-1">
+                  Nascimento
                 </div>
-              </div>
-              <div>
-                <div className="text-gray-500 text-xs">Nascimento</div>
                 <div className="text-gray-800 font-medium">
                   {pessoa.dataNascimento || "-"}
                 </div>
               </div>
-              <div className="col-span-2">
-                <div className="text-gray-500 text-xs">Endereço</div>
-                <div className="text-gray-800 font-medium break-words">
+              <div>
+                <div className="text-gray-500 text-xs font-medium mb-1">
+                  Endereço
+                </div>
+                <div className="text-gray-800 font-medium">
                   {pessoa.endereco || "-"}
                 </div>
               </div>
             </div>
           </div>
+
           <div>
-            <p className="text-xs text-gray-600 font-semibold mb-2">
-              CONTA ATUAL
+            <p className="text-xs text-gray-600 font-semibold uppercase tracking-wide mb-3">
+              Conta Atual
             </p>
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
-                <div className="text-gray-500 text-xs">Número</div>
+                <div className="text-gray-500 text-xs font-medium mb-1">
+                  Número
+                </div>
                 <div className="text-gray-800 font-medium">
                   {numeroConta ?? contas?.[0]?.numeroConta ?? "-"}
                 </div>
               </div>
               <div>
-                <div className="text-gray-500 text-xs">Tipo</div>
+                <div className="text-gray-500 text-xs font-medium mb-1">
+                  Tipo
+                </div>
                 <div className="text-gray-800 font-medium">
                   {tipoContaLabel}
                 </div>
@@ -315,8 +322,8 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
 
           {Array.isArray(contas) && contas.length > 1 && (
             <div>
-              <p className="text-xs text-gray-600 font-semibold mb-2">
-                MINHAS CONTAS
+              <p className="text-xs text-gray-600 font-semibold uppercase tracking-wide mb-3">
+                Minhas Contas
               </p>
               <div className="space-y-2">
                 {contas.map((c, idx) => {
@@ -325,10 +332,10 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
                   return (
                     <div
                       key={idx}
-                      className={`flex items-center justify-between px-3 py-2 rounded-lg border ${
+                      className={`flex items-center justify-between px-3 py-2 rounded-lg border transition ${
                         isAtiva
-                          ? "border-pink-300 bg-pink-50"
-                          : "border-gray-200"
+                          ? "border-rose-300 bg-rose-50"
+                          : "border-gray-200 bg-gray-50"
                       }`}
                     >
                       <div className="text-sm">
@@ -348,7 +355,7 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
                       </div>
                       {!isAtiva && (
                         <button
-                          className="text-xs px-3 py-1 rounded-lg bg-pink-600 hover:bg-pink-700 text-white font-semibold"
+                          className="text-xs px-3 py-1 rounded-lg bg-pink-600 hover:bg-pink-700 text-white font-medium transition"
                           onClick={() => {
                             try {
                               localStorage.setItem(
@@ -377,7 +384,7 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
       )}
 
       {!showEditPerfil && !showCreateConta && (
-        <div className="p-3 space-y-2">
+        <div className="p-3 space-y-1">
           <button
             onClick={() => {
               setEditForm({
@@ -394,9 +401,9 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
           </button>
           <button
             onClick={() => setShowCreateConta(true)}
-            className="w-full text-left px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition text-sm font-medium"
+            className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition text-sm font-medium"
           >
-            Criar Nova Conta
+            Nova Conta
           </button>
           <button
             onClick={async () => {
@@ -426,12 +433,14 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
       )}
 
       {showEditPerfil && (
-        <div className="p-4">
+        <div className="p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Editar Perfil</h3>
+            <h3 className="text-lg font-semibold text-gray-800">
+              Editar Perfil
+            </h3>
             <button
               onClick={() => setShowEditPerfil(false)}
-              className="text-gray-500 hover:text-gray-700"
+              className="text-gray-500 hover:text-gray-700 text-lg"
             >
               ✕
             </button>
@@ -443,7 +452,7 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
               </label>
               <input
                 type="text"
-                className="w-full border border-gray-300 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full border border-gray-300 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                 value={editForm.nome}
                 onChange={(e) =>
                   setEditForm({ ...editForm, nome: e.target.value })
@@ -456,7 +465,7 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
               </label>
               <input
                 type="email"
-                className="w-full border border-gray-300 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full border border-gray-300 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                 value={editForm.email}
                 onChange={(e) =>
                   setEditForm({ ...editForm, email: e.target.value })
@@ -469,7 +478,7 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
               </label>
               <input
                 type="tel"
-                className="w-full border border-gray-300 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full border border-gray-300 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                 value={editForm.telefone}
                 onChange={(e) =>
                   setEditForm({ ...editForm, telefone: e.target.value })
@@ -482,18 +491,18 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
               </label>
               <input
                 type="text"
-                className="w-full border border-gray-300 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full border border-gray-300 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                 value={editForm.endereco}
                 onChange={(e) =>
                   setEditForm({ ...editForm, endereco: e.target.value })
                 }
               />
             </div>
-            <div className="flex gap-2 pt-2">
+            <div className="flex gap-2 pt-3">
               <button
                 onClick={handleEditPerfil}
                 disabled={loading}
-                className="flex-1 bg-pink-600 hover:bg-pink-700 text-white py-2 rounded-lg font-medium text-sm transition disabled:opacity-50"
+                className="flex-1 bg-rose-600 hover:bg-rose-700 text-white py-2 rounded-lg font-medium text-sm transition disabled:opacity-50"
               >
                 {loading ? "Salvando..." : "Salvar"}
               </button>
@@ -509,12 +518,14 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
       )}
 
       {showCreateConta && (
-        <div className="p-4">
+        <div className="p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Criar Nova Conta</h3>
+            <h3 className="text-lg font-semibold text-gray-800">
+              Criar Nova Conta
+            </h3>
             <button
               onClick={() => setShowCreateConta(false)}
-              className="text-gray-500 hover:text-gray-700"
+              className="text-gray-500 hover:text-gray-700 text-lg"
             >
               ✕
             </button>
@@ -525,7 +536,7 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
                 Tipo de Conta
               </label>
               <select
-                className="w-full border border-gray-300 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full border border-gray-300 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                 value={novaContaTipo}
                 onChange={(e) => setNovaContaTipo(e.target.value)}
               >
@@ -535,22 +546,22 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">
-                PIN (mínimo 4 dígitos)
+                PIN (4 dígitos)
               </label>
               <input
                 type="password"
-                className="w-full border border-gray-300 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full border border-gray-300 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                 value={novaContaPin}
                 onChange={(e) => setNovaContaPin(e.target.value)}
                 placeholder="Digite seu PIN"
               />
             </div>
             <p className="text-xs text-gray-600">Saldo inicial: R$ 0,00</p>
-            <div className="flex gap-2 pt-2">
+            <div className="flex gap-2 pt-3">
               <button
                 onClick={handleCreateConta}
                 disabled={loading}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium text-sm transition disabled:opacity-50"
+                className="flex-1 bg-rose-600 hover:bg-rose-700 text-white py-2 rounded-lg font-medium text-sm transition disabled:opacity-50"
               >
                 {loading ? "Criando..." : "Criar Conta"}
               </button>

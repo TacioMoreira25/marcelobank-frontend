@@ -57,7 +57,6 @@ const LoanSection: React.FC<LoanSectionProps> = ({
   interestRate = 4.5,
   onPay = async () => {},
 }) => {
-  const [payValues, setPayValues] = useState<Record<number, string>>({});
   const [paying, setPaying] = useState<Record<number, boolean>>({});
   const [payModal, setPayModal] = useState<{
     open: boolean;
@@ -72,7 +71,7 @@ const LoanSection: React.FC<LoanSectionProps> = ({
   );
 
   const openPayModal = (id: number, parcela: number) => {
-    const raw = payValues[id] || (parcela ? parcela.toFixed(2) : "");
+    const raw = parcela ? parcela.toFixed(2) : "";
     setPayModal({ open: true, id, valor: raw });
     setPin("");
   };
@@ -93,7 +92,6 @@ const LoanSection: React.FC<LoanSectionProps> = ({
     setPaying((s) => ({ ...s, [id]: true }));
     try {
       await onPay(id, valor, pin);
-      setPayValues((s) => ({ ...s, [id]: "" }));
       setPayModal({ open: false });
       setPin("");
     } catch (error) {
@@ -234,9 +232,6 @@ const LoanSection: React.FC<LoanSectionProps> = ({
                   <th className="px-4 py-3 text-left font-semibold text-gray-700">
                     Status
                   </th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-700">
-                    Ações
-                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -258,13 +253,7 @@ const LoanSection: React.FC<LoanSectionProps> = ({
                   const hasId =
                     idNormalized !== undefined && idNormalized !== null;
                   const canPay =
-                    hasId &&
-                    status !== "LIQUIDADO" &&
-                    aprovado > 0 &&
-                    !paying[key];
-
-                  const inputVal =
-                    payValues[key] ?? (parcela ? parcela.toFixed(2) : "");
+                    hasId && status !== "LIQUIDADO" && aprovado > 0;
 
                   return (
                     <tr
@@ -293,6 +282,28 @@ const LoanSection: React.FC<LoanSectionProps> = ({
                         {e.saldoDevedor !== undefined
                           ? formatCurrency(Number(e.saldoDevedor))
                           : "-"}
+                        {canPay && (
+                          <div className="mt-2">
+                            <button
+                              className="px-3 py-1.5 rounded text-xs font-semibold whitespace-nowrap transition bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 text-white shadow-sm"
+                              onClick={() => {
+                                if (
+                                  idNormalized === undefined ||
+                                  idNormalized === null
+                                ) {
+                                  alert(
+                                    "Não foi possível identificar o empréstimo para pagamento."
+                                  );
+                                  return;
+                                }
+                                openPayModal(idNormalized, parcela);
+                              }}
+                              type="button"
+                            >
+                              Pagar
+                            </button>
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <div
@@ -304,57 +315,29 @@ const LoanSection: React.FC<LoanSectionProps> = ({
                           {status}
                         </div>
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <input
-                            className={`border px-2 py-1 rounded w-28 text-xs font-medium ${
-                              canPay
-                                ? "border-pink-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
-                                : "border-gray-200 bg-gray-100 text-gray-500"
-                            }`}
-                            type="text"
-                            inputMode="decimal"
-                            value={inputVal}
-                            onChange={(e) => {
-                              if (canPay) {
-                                setPayValues((s) => ({
-                                  ...s,
-                                  [key]: e.target.value,
-                                }));
-                              }
-                            }}
-                            disabled={!canPay}
-                            placeholder="0,00"
-                          />
-                          <button
-                            className={`px-3 py-1 rounded text-xs font-semibold whitespace-nowrap transition ${
-                              canPay
-                                ? "bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 text-white shadow-md"
-                                : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                            }`}
-                            disabled={!canPay}
-                            onClick={() => {
-                              if (
-                                idNormalized === undefined ||
-                                idNormalized === null
-                              ) {
-                                alert(
-                                  "Não foi possível identificar o empréstimo para pagamento."
-                                );
-                                return;
-                              }
-                              openPayModal(idNormalized, parcela);
-                            }}
-                            type="button"
-                          >
-                            {paying[key] ? "Pagando..." : "Pagar parcela"}
-                          </button>
-                        </div>
-                      </td>
                     </tr>
                   );
                 })}
               </tbody>
+              <tfoot>
+                <tr className="bg-gray-50">
+                  <td
+                    className="px-4 py-3 text-gray-700 font-semibold"
+                    colSpan={6}
+                  >
+                    Total em aberto
+                  </td>
+                  <td className="px-4 py-3 font-semibold text-red-600">
+                    {formatCurrency(
+                      items.reduce(
+                        (acc, cur) => acc + Number(cur.saldoDevedor || 0),
+                        0
+                      )
+                    )}
+                  </td>
+                  <td></td>
+                </tr>
+              </tfoot>
             </table>
           </div>
         )}
@@ -400,6 +383,12 @@ const LoanSection: React.FC<LoanSectionProps> = ({
                   value={pin}
                   onChange={(e) => setPin(e.target.value)}
                   placeholder="Digite seu PIN"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      confirmPay();
+                    }
+                  }}
                 />
               </div>
             </div>
@@ -407,8 +396,11 @@ const LoanSection: React.FC<LoanSectionProps> = ({
               <button
                 className="flex-1 bg-pink-600 hover:bg-pink-700 text-white py-2 rounded-lg font-medium text-sm transition disabled:opacity-50"
                 onClick={confirmPay}
+                disabled={payModal.id != null && Boolean(paying[payModal.id])}
               >
-                Confirmar
+                {payModal.id != null && paying[payModal.id]
+                  ? "Confirmando..."
+                  : "Confirmar"}
               </button>
               <button
                 className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 rounded-lg font-medium text-sm transition"
