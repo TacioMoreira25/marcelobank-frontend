@@ -1,75 +1,43 @@
-# React + TypeScript + Vite
+# MarceloBank - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+O MarceloBank é uma aplicação de simulação do sistema bancário que permite aos clientes gerenciar suas contas, realizar transações de saque, depósito e transferência, solicitar empréstimos e emitir cartões. Este projeto foi desenvolvido como parte dos requisitos da disciplina de Banco de Dados. Este repositório contém o código-fonte da interface do usuário (Frontend).
 
-Currently, two official plugins are available:
+## Visão Geral do Projeto
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+A interface foi desenvolvida para oferecer uma experiência de usuário fluida, responsiva e intuitiva, simulando um internet banking moderno. O painel principal (Dashboard) consolida informações de extrato, limites de cartão e andamento de empréstimos em tempo real, refletindo diretamente as operações consolidadas no banco de dados.
 
-## React Compiler
+## Stack Tecnológica
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+- Framework Principal: React (com TypeScript)
+- Ferramenta de Build: Vite
+- Estilização: Tailwind CSS
+- Cliente HTTP: Axios (Configuração de interceptors e serviços de API)
 
-Note: This will impact Vite dev & build performances.
+## Estrutura do Projeto
 
-## Expanding the ESLint configuration
+O projeto segue uma divisão modular focada na separação de responsabilidades:
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- /api: Configurações de URL base e interceptors do cliente HTTP.
+- /components: Componentes reutilizáveis de interface (Header, Sidebar, Formulários).
+- /pages: Telas principais da aplicação (Home, Cliente, Conta).
+- /services: Camada de integração com a API REST (auth, conta, cliente, transacao).
+- /types: Definições de interfaces TypeScript para tipagem estática e garantia de contratos.
+- /utils: Formatadores numéricos e funções de validação de regras de negócio no lado cliente.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Integração com o Backend
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+Este frontend atua como a camada de apresentação e depende exclusivamente do servidor principal para o processamento das transações e validação de segurança.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- Repositório do Backend: [MarceloBank - Backend](https://github.com/TacioMoreira25/marcelobank)
+- Comunicação: O frontend consome uma API RESTful robusta desenvolvida em Java com Spring Boot, responsável por gerenciar a persistência no banco de dados relacional da disciplina, aplicar regras de negócio de saldo e garantir o controle de acesso seguro via tokens JWT.
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Como Executar a Aplicação
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+1. Clone este repositório:
+   git clone https://github.com/TacioMoreira25/marcelobank-frontend.git
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+2. Acesse o diretório do projeto e instale as dependências:
+   npm install
+
+3. Inicie o servidor de desenvolvimento local:
+   npm run dev
